@@ -1,20 +1,23 @@
 package ru.yandex.praktikum.pages;
 
 import org.openqa.selenium.*;
+import org.openqa.selenium.support.ui.*;
 
 import java.util.*;
 
 public class MainPage {
     private WebDriver driver;
+    public static final String QA_SCOOTER_URL = "https://qa-scooter.praktikum-services.ru/";
 
     //Вопрос
-    public By getQuestionLocator(String questionId) {
-        return By.id(questionId);
+    public By getQuestionLocator(String index) {
+        return By.id("accordion__heading-" + index);
     }
 
     //Ответ
-    public By getAnswerLocator(String answerId) {
-        return By.id(answerId);
+    public By getAnswerLocator(String index) {
+        return By.id("accordion__panel-" + index);
+
     }
 
     //Кнопка "Заказать" вверху
@@ -28,18 +31,20 @@ public class MainPage {
     }
 
     //клик по вопросу
-    public void clickQuestionById(By questionLocator) {
-        driver.findElement(questionLocator).click();
+    public void clickQuestionByIndex(String index) {
+        driver.findElement(getQuestionLocator(index)).click();
+        new WebDriverWait(driver, 2)
+                .until(ExpectedConditions.visibilityOfElementLocated(getAnswerLocator(index)));
     }
 
     //текст ответа
-    public String getAnswerText(By answerLocator) {
-        return driver.findElement(answerLocator).getText();
+    public String getAnswerText(String index) {
+        return driver.findElement(getAnswerLocator(index)).getText();
     }
 
     //скролл до ответа
-    public void scrollToQuestion(By questionLocator) {
-        WebElement question = driver.findElement(questionLocator);
+    public void scrollToQuestion(String index) {
+        WebElement question = driver.findElement(getQuestionLocator(index));
         ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", question);
     }
 

@@ -1,5 +1,6 @@
 package ru.yandex.praktikum.tests;
 
+import io.github.bonigarcia.wdm.*;
 import org.junit.*;
 import org.junit.runner.*;
 import org.junit.runners.*;
@@ -24,9 +25,10 @@ public class OrderTest {
     private String duration;
     private String color;
     private String comment;
+    private boolean useTopButton;
 
     public OrderTest(String name, String surname, String address, String metro, String phone, String date,
-                     String duration, String color, String comment) {
+                     String duration, String color, String comment, Boolean useTopButton) {
         this.name = name;
         this.surname = surname;
         this.address = address;
@@ -36,58 +38,45 @@ public class OrderTest {
         this.duration = duration;
         this.color = color;
         this.comment = comment;
+        this.useTopButton = useTopButton;
     }
 
     @Parameterized.Parameters
     public static Object[][] testData() {
         return new Object[][]{
-                {"Иван", "Иванов", "ул. Пушкина, д.1", "Сокольники", "+79991234455", "12.01.2026", "сутки", "black", "Привет курьеру"},
-                {"Петрова", "Ирина", "ул. Фестивальная, д.4", "Речной вокзал", "+79991112233", "05.05.2026", "трое суток", "grey", ""},
+                {"Иван", "Иванов", "ул. Пушкина, д.1", "Сокольники", "+79991234455", "12.01.2026", "сутки", "black", "Привет курьеру", true},
+                {"Петрова", "Ирина", "ул. Фестивальная, д.4", "Речной вокзал", "+79991112233", "05.05.2026", "трое суток", "grey", "", true},
+                {"Иван", "Иванов", "ул. Пушкина, д.1", "Сокольники", "+79991234455", "12.01.2026", "сутки", "black", "Привет курьеру", false},
+                {"Петрова", "Ирина", "ул. Фестивальная, д.4", "Речной вокзал", "+79991112233", "05.05.2026", "трое суток", "grey", "", false},
         };
     }
 
-    @Test
-    public void orderWithTopButtonChromeShouldSucceed() {
-        driver = new ChromeDriver();
-        driver.get("https://qa-scooter.praktikum-services.ru/");
-        MainPage mainPage = new MainPage(driver);
-        mainPage.clickTopOrderButton();
 
-        OrderPage orderPage = new OrderPage(driver);
-        fillFormAndSubmit(orderPage);
+    @Before
+    public void runBrowser() {
+        String browser = System.getProperty("browser", "chrome");
+        if (browser.equalsIgnoreCase("firefox")) {
+            WebDriverManager.firefoxdriver().setup();
+            driver = new FirefoxDriver();
+        } else {
+            WebDriverManager.chromedriver().setup();
+            driver = new ChromeDriver();
+        }
     }
 
-    @Test
-    public void orderWithBottomButtonChromeShouldSucceed() {
-        driver = new ChromeDriver();
-        driver.get("https://qa-scooter.praktikum-services.ru/");
-        MainPage mainPage = new MainPage(driver);
-        mainPage.scrollToBotOrderButton();
-        mainPage.clickBottomOrderButton();
-
-        OrderPage orderPage = new OrderPage(driver);
-        fillFormAndSubmit(orderPage);
-    }
 
     @Test
-    public void orderWithTopButtonFirefoxShouldSucceed() {
-        driver = new FirefoxDriver();
-        driver.get("https://qa-scooter.praktikum-services.ru/");
+    public void orderScooter() {
+
+        driver.get(MainPage.QA_SCOOTER_URL);
         MainPage mainPage = new MainPage(driver);
-        mainPage.clickTopOrderButton();
 
-        OrderPage orderPage = new OrderPage(driver);
-        fillFormAndSubmit(orderPage);
-    }
-
-    @Test
-    public void orderWithBottomButtonFirefoxShouldSucceed() {
-        driver = new FirefoxDriver();
-        driver.get("https://qa-scooter.praktikum-services.ru/");
-        MainPage mainPage = new MainPage(driver);
-        mainPage.scrollToBotOrderButton();
-        mainPage.clickBottomOrderButton();
-
+        if (useTopButton) {
+            mainPage.clickTopOrderButton();
+        } else {
+            mainPage.scrollToBotOrderButton();
+            mainPage.clickBottomOrderButton();
+        }
         OrderPage orderPage = new OrderPage(driver);
         fillFormAndSubmit(orderPage);
     }
@@ -113,6 +102,6 @@ public class OrderTest {
         orderPage.fillFormComment(comment);
         orderPage.clickOrderButton();
         orderPage.clickOrderYesButton();
-        Assert.assertTrue(orderPage.isConfirmWindowOpened());
+        Assert.assertTrue("Не открылось окно подтверждения заказа", orderPage.isConfirmWindowOpened());
     }
 }
